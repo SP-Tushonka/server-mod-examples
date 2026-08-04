@@ -37,20 +37,18 @@ public record ModMetadata : AbstractModMetadata
 // We want to load after PostDBModLoader is complete, so we set our type priority to that, plus 1.
 [Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
 public class EditConfigs(
-    ConfigServer configServer,
+    BotConfig botConfig,
+    HideoutConfig hideoutConfig,
+    WeatherConfig weatherConfig,
+    AirdropConfig airdropConfig,
+    PmcChatResponse pmcChatResponseConfig,
+    QuestConfig questConfig,
+    PmcConfig pmcConfig,
     ISptLogger<EditConfigs> logger
 ) : IOnLoad // Implement the IOnLoad interface so that this mod can do something
 {
-    // We get a config by calling GetConfig<>() and passing the configs 'type' inside the diamond <> brackets
-    // These fields start with a _, this is a good convention when you are making private fields in your code
-    // They're also readonly as you shouldn't be overwriting configs, only editing values inside them
-    private readonly BotConfig _botConfig = configServer.GetConfig<BotConfig>();
-    private readonly HideoutConfig _hideoutConfig = configServer.GetConfig<HideoutConfig>();
-    private readonly WeatherConfig _weatherConfig = configServer.GetConfig<WeatherConfig>();
-    private readonly AirdropConfig _airdropConfig = configServer.GetConfig<AirdropConfig>();
-    private readonly PmcChatResponse _pmcChatResponseConfig = configServer.GetConfig<PmcChatResponse>();
-    private readonly QuestConfig _questConfig = configServer.GetConfig<QuestConfig>();
-    private readonly PmcConfig _pmcConfig = configServer.GetConfig<PmcConfig>();
+    // We get a config by injecting it into the class
+
 
     /// <summary>
     /// This is called when this class is loaded, the order in which its loaded is set according to the type priority
@@ -60,23 +58,23 @@ public class EditConfigs(
     public Task OnLoad()
     {
         // Let's edit the weather config to force the season to winter
-        _weatherConfig.OverrideSeason = Season.WINTER;
+        weatherConfig.OverrideSeason = Season.WINTER;
 
         // Let's edit the hideout config to Make all crafts take 60 seconds
-        _hideoutConfig.OverrideCraftTimeSeconds = 60;
+        hideoutConfig.OverrideCraftTimeSeconds = 60;
 
         // Let's edit the hideout config to Make all upgrades take 60 seconds
-        _hideoutConfig.OverrideBuildTimeSeconds = 60;
+        hideoutConfig.OverrideBuildTimeSeconds = 60;
 
         // Let's edit the airdrop config to Make weapon/armor drops REALLY common
         // We can use the helper `AddOrUpdate`
-        _airdropConfig.AirdropTypeWeightings.AddOrUpdate(SptAirdropTypeEnum.weaponArmor, 999);
+        airdropConfig.AirdropTypeWeightings.AddOrUpdate(SptAirdropTypeEnum.weaponArmor, 999);
 
         // Let's edit the airdrop config to Make weapon/armor drops always have 3 sealed weapon crates
         // When accessing a dictionary, 'TryGetValue' is a safe way to do it, it will return true if it finds the key you want, or false if it doesn't
         // The second parameter 'weaponAndArmorLootSettingsAirdropLoot' is an 'out' parameter, it will be hydrated with the data we want if it's found
         // The examples below that access dictionaries will be the 'unsafe/old' way using square [] brackets. Both approaches will work, you should consider both and consider which suits your needs for your mod
-        if (_airdropConfig.Loot.TryGetValue("weaponArmor", out var weaponAndArmorLootSettingsAirdropLoot))
+        if (airdropConfig.Loot.TryGetValue("weaponArmor", out var weaponAndArmorLootSettingsAirdropLoot))
         {
             // We found what we wanted in the dictionary, lets make changes
             // Weapon/armor crates will always have 3 sealed weapon crates inside them
@@ -85,19 +83,19 @@ public class EditConfigs(
         }
 
         // Let's make PMCs always mail you when they kill you
-        _pmcChatResponseConfig.Killer.ResponseChancePercent = 100;
+        pmcChatResponseConfig.Killer.ResponseChancePercent = 100;
 
         // Let's make quest rewards sent to you via mail last for over a week for unheard profiles
-        _questConfig.MailRedeemTimeHours.AddOrUpdate("unheard_edition", 168);
+        questConfig.MailRedeemTimeHours.AddOrUpdate("unheard_edition", 168);
 
         // Let's make the interchange bot cap huge
-        _botConfig.MaxBotCap.AddOrUpdate("interchange", 50);
+        botConfig.MaxBotCap.AddOrUpdate("interchange", 50);
 
         // Let's disable loot on scavs
-        _botConfig.DisableLootOnBotTypes.Add("assault");
+        botConfig.DisableLootOnBotTypes.Add("assault");
 
         // Lets make PMCs carry absurdly expensive loot in their pockets
-        _pmcConfig.LootSettings.Pocket.TotalRubByLevel =
+        pmcConfig.LootSettings.Pocket.TotalRubByLevel =
         [
             new MinMaxLootValue
             {
