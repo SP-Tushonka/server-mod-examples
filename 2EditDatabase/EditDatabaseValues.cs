@@ -1,11 +1,11 @@
+using SPTarkov.Common.Models.Logging;
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Enums.Hideout;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
-using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace _2EditDatabase;
 
@@ -17,7 +17,7 @@ namespace _2EditDatabase;
 /// All properties must be overriden, properties you don't use may be left null.
 /// It is read by the mod loader when this mod is loaded.
 /// </summary>
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
     /// <summary>
     /// Any string can be used for a modId, but it should ideally be unique and not easily duplicated
@@ -25,24 +25,27 @@ public record ModMetadata : AbstractModMetadata
     /// It is recommended (but not mandatory) to use the reverse domain name notation,
     /// see: https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
     /// </summary>
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.editdatabase";
-    public override string Name { get; init; } = "EditDatabaseExample";
-    public override string Author { get; init; } = "SPTarkov";
-    public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; }
-    public override bool? IsBundleMod { get; init; }
-    public override string License { get; init; } = "MIT";
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.editdatabase";
+    public string Name { get; init; } = "EditDatabaseExample";
+    public string Author { get; init; } = "SPTarkov";
+    public List<string>? Contributors { get; init; }
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; }
+    public string License { get; init; } = "MIT";
+    public bool HasPrepatcher { get; init; } = false;
 }
 
 // We want to load after PostDBModLoader is complete, so we set our type priority to that, plus 1.
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
 public class EditDatabaseValues(
-    ISptLogger<EditDatabaseValues> logger, // We are injecting a logger similar to example 1, but notice the class inside <> is different
-    DatabaseService databaseService)
+    ISptLogger<EditDatabaseValues> logger,
+    GlobalTable globalTable,
+    BotTable botTable,
+    LocationTable locationTable,
+    HideoutTable hideoutTable) // We are injecting a logger similar to example 1, but notice the class inside < > is different
     : IOnLoad // Implement the `IOnLoad` interface so that this mod can do something
 {
     // Our constructor
@@ -52,7 +55,7 @@ public class EditDatabaseValues(
     /// on the [Injectable] attribute on this class. Each class can then be used as an entry point to do
     /// things at varying times according to type priority
     /// </summary>
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         // When SPT starts, it stores all the data found in (SPT_Data\Server\database) in memory
         // We can use the 'databaseService' we injected to access this data, this includes files from EFT and SPT
@@ -83,18 +86,14 @@ public class EditDatabaseValues(
     
     private void EditGlobals()
     {
-        // Let's edit settings in the GLOBALS file (database/globals.json)
-        var globals = databaseService.GetGlobals();
-
         // Let's edit the scav cooldown to be 1 second
-        globals.Configuration.SavagePlayCooldown = 1;
+        globalTable.Configuration.SavagePlayCooldown = 1;
 
         // Now lets try editing the ragfair unlock level, lets get the ragfair settings first
-        var ragfairSettings = globals.Configuration.RagFair;
+        var ragfairSettings = globalTable.Configuration.RagFair;
 
         // Lets set the level you need to be to access flea to be 1
         ragfairSettings.MinUserLevel = 1;
-
 
         // Now lets increase the number of offers you can have listed at one time
         // The max is stored in a list, different flea ratings give different offer amounts
@@ -108,11 +107,8 @@ public class EditDatabaseValues(
 
     private void EditBtr()
     {
-        // BTR setting can be found in the GLOBALS file too
-        var globals = databaseService.GetGlobals();
-
         // We get the BTR settings from globals first
-        var btrSettings = globals.Configuration.BTRSettings;
+        var btrSettings = globalTable.Configuration.BTRSettings;
 
         // Let's get the settings for woods specifically, we use 'tryGetValue' for this, the settings will be stored in 'woodsBtrSettings'
         btrSettings.MapsConfigs.TryGetValue("Woods", out var woodsBtrSettings);
@@ -123,11 +119,8 @@ public class EditDatabaseValues(
 
     private void EditHideout()
     {
-        // Hideout data can be found in (SPT_Data\Server\database\hideout)
-        var hideout = databaseService.GetHideout();
-
         // We want the areas, they're stored in a list
-        var hideoutAreas = hideout.Areas;
+        var hideoutAreas = hideoutTable.Areas;
 
         // We find the toilet, we use 'firstOrDefault', if we cant find the watercloset, 'waterclosetArea' will be null
         var waterclosetArea = hideoutAreas.FirstOrDefault(area => area.Type == HideoutAreas.WaterCloset);
@@ -139,13 +132,13 @@ public class EditDatabaseValues(
         // Stages are stored in a dictionary, a dictionary has a 'key' and a 'value'
         // In this case, the 'key' is the upgrade stage, e.g. "1", or "2"
         // We reference to each stage as a 'stageKvP' this means 'Key value Pair', every key has a value (key = stage number, value = data for that stage)
-        foreach (var stageKvP in toiletStages)
+        foreach (var (stageKey, stageValue) in toiletStages)
         {
             // while we're here, we can make the stages craft really fast (60 seconds)
-            stageKvP.Value.ConstructionTime = 60;
+            stageValue.ConstructionTime = 60;
 
             // Let's get the stage requirements, they're a list
-            var stageRequirements = stageKvP.Value.Requirements;
+            var stageRequirements = stageValue.Requirements;
 
             // We empty the requirements out, now it can be built straight away
             stageRequirements.Clear();
@@ -154,10 +147,8 @@ public class EditDatabaseValues(
 
     private void EditScavSettings()
     {
-        var bots = databaseService.GetBots();
-
         // Same as the above example, we use 'TryGetValue' to get the 'assault' bot (assault is the internal name for scavs)
-        bots.Types.TryGetValue("assault", out var assaultBot);
+        botTable.Types.TryGetValue("assault", out var assaultBot);
 
         // Let's make the chance to get a good backpack really high
         assaultBot.BotInventory.Equipment.TryGetValue(EquipmentSlots.Backpack, out var backPacks);
@@ -184,11 +175,8 @@ public class EditDatabaseValues(
 
     private void EditCustoms()
     {
-        // Let's get all the maps (called locations)
-        var locations = databaseService.GetLocations();
-
         // Customs is called 'bigmap' in eft
-        var customs = locations.Bigmap;
+        var customs = locationTable.Bigmap;
 
         // Lets get the exits and make them all 100% chance to appear
         var exits = customs.Base.Exits;

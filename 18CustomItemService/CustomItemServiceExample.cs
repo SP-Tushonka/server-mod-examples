@@ -2,41 +2,43 @@
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
-using SPTarkov.Server.Core.Services.Mod;
+using SPTarkov.Common.Models.Logging;
+using SPTarkov.Server.Core.Services.Modding.Custom;
+using SPTarkov.Server.Core.Models.Enums;
 
 namespace _18CustomItemService;
 
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.customitem";
-    public override string Name { get; init; } = "CustomItemServiceExample";
-    public override string Author { get; init; } = "SPTarkov";
-    public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.customitem";
+    public string Name { get; init; } = "CustomItemServiceExample";
+    public string Author { get; init; } = "SPTarkov";
+    public List<string>? Contributors { get; init; }
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     
     
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; }
-    public override bool? IsBundleMod { get; init; }
-    public override string License { get; init; } = "MIT";
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; }
+    public string License { get; init; } = "MIT";
+    public bool HasPrepatcher { get; init; } = false;
 }
 
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
 public class CustomItemServiceExample(
     ISptLogger<CustomItemServiceExample> logger,
     CustomItemService customItemService) : IOnLoad
 {
 
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         //Example of adding new item by cloning an existing item using `createCloneDetails`
         var exampleCloneItem = new NewItemFromCloneDetails
         {
+            NewItemName = string.Empty,
             ItemTplToClone = ItemTpl.SHOTGUN_MP18_762X54R_SINGLESHOT_RIFLE,
-            // ParentId refers to the Node item the gun will be under, you can check it in https://db.sp-tarkov.com/search
+            // ParentId refers to the Node item the gun will be under, you can check it in https://db.sp-tushonka.com/search
             ParentId = "5447b6094bdc2dc3278b4567",
             // The new id of our cloned item - MUST be a valid mongo id, search online for mongo id generators
             NewId = "677eed5f2e040616bc7246b6",

@@ -1,7 +1,7 @@
 ﻿using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
+using SPTarkov.Common.Models.Logging;
 
 namespace _8OnLoad;
 
@@ -13,29 +13,29 @@ namespace _8OnLoad;
 /// All properties must be overriden, properties you don't use may be left null.
 /// It is read by the mod loader when this mod is loaded.
 /// </summary>
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.onload";
-    public override string Name { get; init; } = "OnLoadExampleExample";
-    public override string Author { get; init; } = "SPTarkov";
-    public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.onload";
+    public string Name { get; init; } = "OnLoadExampleExample";
+    public string Author { get; init; } = "SPTarkov";
+    public List<string>? Contributors { get; init; }
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     
     
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; }
-    public override bool? IsBundleMod { get; init; }
-    public override string License { get; init; } = "MIT";
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; }
+    public string License { get; init; } = "MIT";
+    public bool HasPrepatcher { get; init; } = false;
 }
 
 // Check `OnLoadOrder` for list of possible choices
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader)] // Can also give an int value for fine-grained control
+[Injectable(TypePriority = OnLoadOrder.PostLoad)] // Can also give an int value for fine-grained control
 public class OnLoadExample(
     ISptLogger<OnLoadExample> logger) : IOnLoad // Must implement the IOnLoad interface
 {
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         // Can do work here
         logger.Success($"Mod loaded after database!");

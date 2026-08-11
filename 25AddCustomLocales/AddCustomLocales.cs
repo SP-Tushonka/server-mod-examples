@@ -1,33 +1,34 @@
 ﻿using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
-using SPTarkov.Server.Core.Services;
+using SPTarkov.Common.Models.Logging;
+using SPTarkov.Server.Core.Services.Locales;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace _25AddCustomLocales;
 
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.customlocales";
-    public override string Name { get; init; } = "AddCustomLocalesExample";
-    public override string Author { get; init; } = "SPTarkov";
-    public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.customlocales";
+    public string Name { get; init; } = "AddCustomLocalesExample";
+    public string Author { get; init; } = "SPTarkov";
+    public List<string>? Contributors { get; init; }
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
 
 
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; }
-    public override bool? IsBundleMod { get; init; }
-    public override string License { get; init; } = "MIT";
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; }
+    public string License { get; init; } = "MIT";
+    public bool HasPrepatcher { get; init; } = false;
 }
 
-[Injectable(TypePriority = OnLoadOrder.PostSptModLoader + 1)]
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
 public class AddCustomLocales(
     ISptLogger<AddCustomLocales> logger,
-    DatabaseService databaseService,
     LocaleService localeService,
+    LocaleTable localeTable,
     ServerLocalisationService serverLocalisationService)
     : IOnLoad
 {
@@ -35,10 +36,10 @@ public class AddCustomLocales(
     // Save the logger we're injecting into a private variable that is scoped to this class (only this class has access to it)
     // save the locale service into a private variable that is scoped to this class (only this class has access to it)
 
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         // Add a custom locale to the en game locales
-       if (databaseService.GetLocales().Global.TryGetValue("en", out var lazyloadedValue))
+       if (localeTable.Global.TryGetValue("en", out var lazyloadedValue))
         {
             // We have to add a transformer here, because locales are lazy loaded due to them taking up huge space in memory
             // The transformer will make sure that each time the locales are requested, the ones changed or added below are included

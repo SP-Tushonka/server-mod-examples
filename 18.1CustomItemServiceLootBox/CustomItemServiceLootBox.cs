@@ -1,53 +1,54 @@
-﻿using SPTarkov.DI.Annotations;
+﻿using SPTarkov.Common.Models.Logging;
+using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
-using SPTarkov.Server.Core.Servers;
-using SPTarkov.Server.Core.Services.Mod;
+using SPTarkov.Server.Core.Models.Spt.Tables;
+using SPTarkov.Server.Core.Services.Modding.Custom;
+
 
 namespace _18._1CustomItemServiceLootBox;
 
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.customitemlootbox";
-    public override string Name { get; init; } = "CustomItemServiceLootBoxExample";
-    public override string Author { get; init; } = "SPTarkov";
-    public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; }
-    public override bool? IsBundleMod { get; init; }
-    public override string License { get; init; } = "MIT";
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.customitemlootbox";
+    public string Name { get; init; } = "CustomItemServiceLootBoxExample";
+    public string Author { get; init; } = "SPTarkov";
+    public List<string>? Contributors { get; init; }
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; }
+    public string License { get; init; } = "MIT";
+    public bool HasPrepatcher { get; init; } = false;
 }
 
 // Inject just after the database has loaded
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
 public class CustomItemServiceLootBox(
     ISptLogger<CustomItemServiceLootBox> logger,
-    DatabaseServer databaseServer,
-    ConfigServer configServer,
+    TemplateTable templateTable,
+    InventoryConfig inventoryConfig,
     CustomItemService customItemService
 ) : IOnLoad
 {
     private Dictionary<MongoId, TemplateItem>? _itemDb;
-    private readonly InventoryConfig _inventoryConfig = configServer.GetConfig<InventoryConfig>();
 
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
-        _itemDb = databaseServer.GetTables().Templates.Items;
+        _itemDb = templateTable.Items;
 
         // Example of adding new item by cloning existing item using createCloneDetails
         const string crateId = "new_crate_with_randomized_content";
         var exampleCloneItem = new NewItemFromCloneDetails
         {
+            NewItemName = "exampleCrate",
             // The item we want to clone, in this example i will cloning the sealed weapon crate
             ItemTplToClone = "6489b2b131a2135f0d7d0fcb",
-            // ParentId refers to the Node item the container will be under, you can check it in https://db.sp-tarkov.com/search
+            // ParentId refers to the Node item the container will be under, you can check it in https://db.sp-tushonka.com/search
             ParentId = "62f109593b54472778797866",
             // The new id of our cloned item
             NewId = crateId,
@@ -84,7 +85,7 @@ public class CustomItemServiceLootBox(
         customItemInDb.Name = crateId;
 
         // Add to inventory config with custom item pool
-        _inventoryConfig.RandomLootContainers[crateId] = new RewardDetails
+        inventoryConfig.RandomLootContainers[crateId] = new RewardDetails
         {
             RewardCount = 6,
             FoundInRaid = true,

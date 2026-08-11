@@ -1,44 +1,43 @@
 ﻿using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
-using SPTarkov.Server.Core.Helpers;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
+using SPTarkov.Common.Models.Logging;
 using SPTarkov.Server.Core.Routers;
-using SPTarkov.Server.Core.Servers;
-using SPTarkov.Server.Core.Services;
 using SPTarkov.Server.Core.Utils;
 using SPTarkov.Server.Core.Utils.Cloners;
 using System.Reflection;
 using Path = System.IO.Path;
+using SPTarkov.Server.Core.Helpers.Server;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace _13._1AddTraderWithDynamicAssorts;
 
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.addtraderdynamicassorts";
-    public override string Name { get; init; } = "AddTraderWithDynamicAssortsExample";
-    public override string Author { get; init; } = "SPTarkov";
-    public override List<string>? Contributors { get; init; } = ["Clodan", "CWX"];
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.addtraderdynamicassorts";
+    public string Name { get; init; } = "AddTraderWithDynamicAssortsExample";
+    public string Author { get; init; } = "SPTarkov";
+    public List<string>? Contributors { get; init; } = ["Clodan", "CWX"];
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     
     
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; } = "https://github.com/sp-tarkov/server-mod-examples";
-    public override bool? IsBundleMod { get; init; } = false;
-    public override string License { get; init; } = "MIT";
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; } = "https://github.com/sp-tarkov/server-mod-examples";
+    public string License { get; init; } = "MIT";
+    public bool HasPrepatcher { get; init; } = false;
 }
 
-// This line tells the class to load right after "PostDBModLoader" occurs
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
+// This line tells the class to load right after "PostLoad" occurs
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
 public class AddTraderWithDynamicAssorts(
     ISptLogger<AddTraderWithDynamicAssorts> logger,
+    GlobalTable globalTable,
     ModHelper modHelper,
-    DatabaseService databaseService,
     ImageRouter imageRouter,
     TraderConfig traderConfig,
     RagfairConfig ragfairConfig,
@@ -50,7 +49,7 @@ public class AddTraderWithDynamicAssorts(
     : IOnLoad
 {
 
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         // A path to the mods files we use below
         var pathToMod = modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly());
@@ -112,7 +111,7 @@ public class AddTraderWithDynamicAssorts(
         var mp133PresetId = "584148f2245977598f1ad387";
 
         // We need to clone the preset before we use it, if we dont it alters the data in the server and breaks server
-        var mp133PresetItems = cloner.Clone(databaseService.GetTables().Globals.ItemPresets.GetValueOrDefault(mp133PresetId).Items);
+        var mp133PresetItems = cloner.Clone(globalTable.ItemPresets.GetValueOrDefault(mp133PresetId).Items);
         fluentAssortCreator
             .CreateComplexAssortItem(mp133PresetItems)
             .AddStackCount(200)

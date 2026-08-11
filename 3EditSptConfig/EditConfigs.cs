@@ -4,8 +4,7 @@ using SPTarkov.Server.Core.Extensions;
 using SPTarkov.Server.Core.Models.Enums;
 using SPTarkov.Server.Core.Models.Spt.Config;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
-using SPTarkov.Server.Core.Servers;
+using SPTarkov.Common.Models.Logging;
 
 namespace _3EditSptConfig;
 
@@ -17,31 +16,31 @@ namespace _3EditSptConfig;
 /// All properties must be overriden, properties you don't use may be left null.
 /// It is read by the mod loader when this mod is loaded.
 /// </summary>
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.editsptconfig";
-    public override string Name { get; init; } = "EditConfigsExample";
-    public override string Author { get; init; } = "SPTarkov";
-    public override List<string>? Contributors { get; init; }
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.editsptconfig";
+    public string Name { get; init; } = "EditConfigsExample";
+    public string Author { get; init; } = "SPTarkov";
+    public List<string>? Contributors { get; init; }
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
     
     
-    public override List<string>? Incompatibilities { get; init; }
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
-    public override string? Url { get; init; }
-    public override bool? IsBundleMod { get; init; }
-    public override string License { get; init; } = "MIT";
+    public List<string>? Incompatibilities { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public string? Url { get; init; }
+    public string License { get; init; } = "MIT";
+    public bool HasPrepatcher { get; init; } = false;
 }
 
 // We want to load after PostDBModLoader is complete, so we set our type priority to that, plus 1.
-[Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
+[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
 public class EditConfigs(
     BotConfig botConfig,
     HideoutConfig hideoutConfig,
     WeatherConfig weatherConfig,
     AirdropConfig airdropConfig,
-    PmcChatResponse pmcChatResponseConfig,
+    PmcChatResponseConfig pmcChatResponseConfig,
     QuestConfig questConfig,
     PmcConfig pmcConfig,
     ISptLogger<EditConfigs> logger
@@ -55,7 +54,7 @@ public class EditConfigs(
     /// on the [Injectable] attribute on this class. Each class can then be used as an entry point to do
     /// things at varying times according to type priority
     /// </summary>
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         // Let's edit the weather config to force the season to winter
         weatherConfig.OverrideSeason = Season.WINTER;

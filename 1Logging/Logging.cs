@@ -1,8 +1,7 @@
 using SPTarkov.DI.Annotations;
 using SPTarkov.Server.Core.DI;
-using SPTarkov.Server.Core.Models.Logging;
 using SPTarkov.Server.Core.Models.Spt.Mod;
-using SPTarkov.Server.Core.Models.Utils;
+using SPTarkov.Common.Models.Logging;
 
 namespace _1Logging;
 
@@ -14,7 +13,7 @@ namespace _1Logging;
 /// All properties must be overriden, properties you don't use may be left null.
 /// It is read by the mod loader when this mod is loaded.
 /// </summary>
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
     /// <summary>
     /// Any string can be used for a modId, but it should ideally be unique and not easily duplicated
@@ -22,66 +21,63 @@ public record ModMetadata : AbstractModMetadata
     /// It is recommended (but not mandatory) to use the reverse domain name notation,
     /// see: https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
     /// </summary>
-    public override string ModGuid { get; init; } = "com.sp-tarkov.examples.logging";
+    public string ModGuid { get; init; } = "com.sp-tarkov.examples.logging";
 
     /// <summary>
     /// The name of your mod
     /// </summary>
-    public override string Name { get; init; } = "LoggingExample";
+    public string Name { get; init; } = "LoggingExample";
 
     /// <summary>
     /// Who created the mod (you!)
     /// </summary>
-    public override string Author { get; init; } = "SPTarkov";
+    public string Author { get; init; } = "SPTarkov";
 
     /// <summary>
     /// A list of people who helped you create the mod
     /// </summary>
-    public override List<string>? Contributors { get; init; }
+    public List<string>? Contributors { get; init; }
 
     /// <summary>
     ///  The version of the mod, follows SEMVER rules (https://semver.org/)
     /// </summary>
-    public override SemanticVersioning.Version Version { get; init; } = new("1.0.0");
+    public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
 
     /// <summary>
     /// What version of SPT is your mod made for, follows SEMVER rules (https://semver.org/)
     /// </summary>
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
 
     /// <summary>
     /// ModIds that you know cause problems with your mod
     /// </summary>
-    public override List<string>? Incompatibilities { get; init; }
+    public List<string>? Incompatibilities { get; init; }
 
     /// <summary>
     /// ModIds your mod REQUIRES to function
     /// </summary>
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
 
     /// <summary>
     /// Where to find your mod online
     /// </summary>
-    public override string? Url { get; init; } = "https://github.com/sp-tarkov/server-mod-examples";
-
-    /// <summary>
-    /// Does your mod load bundles? (e.g. new weapon/armor mods)
-    /// </summary>
-    public override bool? IsBundleMod { get; init; } = false;
+    public string? Url { get; init; } = "https://github.com/sp-tarkov/server-mod-examples";
 
     /// <summary>
     /// What Licence does your mod use
     /// </summary>
-    public override string License { get; init; } = "MIT";
+    public string License { get; init; } = "MIT";
+
+    public bool HasPrepatcher { get; init; } = false;
 }
 
-// We want to load after PreSptModLoader is complete, so we set our type priority to that, plus 1.
-[Injectable(TypePriority = OnLoadOrder.PreSptModLoader + 1)]
+// We want to load after Preload is complete, so we set our type priority to that, plus 1.
+[Injectable(TypePriority = OnLoadOrder.Preload + 1)]
 public class Logging(
     ISptLogger<Logging> logger) // We inject a logger for use inside our class, it must have the class inside the diamond <> brackets
     : IOnLoad // Implement the IOnLoad interface so that this mod can do something on server load
 {
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         // We can access the logger and call its methods to log to the server window and the server log file
         logger.Success("This is a success message");
@@ -91,7 +87,7 @@ public class Logging(
         logger.Critical("This is a critical message");
 
         // Logging with colors requires you to 'pass' the text color and background color
-        logger.LogWithColor("This is a message with custom colors", LogTextColor.Red, LogBackgroundColor.Black);
+        logger.LogWithColor("This is a message with custom colors", Spectre.Console.Color.Red, Spectre.Console.Color.Black);
         logger.Debug("This is a debug message that gets written to the log file, not the console");
         
         // Inform the server our mod has finished doing work

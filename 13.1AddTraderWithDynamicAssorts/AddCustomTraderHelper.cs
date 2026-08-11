@@ -3,7 +3,7 @@ using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Spt.Config;
-using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Core.Utils.Cloners;
 
 namespace _13._1AddTraderWithDynamicAssorts
@@ -11,10 +11,11 @@ namespace _13._1AddTraderWithDynamicAssorts
     /// <summary>
     /// We inject this class into 'AddTraderWithDynamicAssorts' to help us with adding the new trader into the server
     /// </summary>
-    [Injectable(TypePriority = OnLoadOrder.PostDBModLoader + 1)]
+    [Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
     public class AddCustomTraderHelper(
         ICloner cloner,
-        DatabaseService databaseService)
+        TradersTable tradersTable,
+        LocaleTable localeTable)
     {
         /// <summary>
         /// Add the traders update time for when their offers refresh
@@ -64,7 +65,7 @@ namespace _13._1AddTraderWithDynamicAssorts
             };
 
             // Add the new trader id and data to the server
-            if (!databaseService.GetTables().Traders.TryAdd(traderDetailsToAdd.Id, traderDataToAdd))
+            if (!tradersTable.TryAdd(traderDetailsToAdd.Id, traderDataToAdd))
             {
                 //Failed to add trader!
             }
@@ -79,7 +80,7 @@ namespace _13._1AddTraderWithDynamicAssorts
         public void AddTraderToLocales(TraderBase baseJson, string firstName, string description)
         {
             // For each language, add locale for the new trader
-            var locales = databaseService.GetTables().Locales.Global;
+            var locales = localeTable.Global;
             var newTraderId = baseJson.Id;
             var fullName = baseJson.Name;
             var nickName = baseJson.Nickname;
@@ -118,7 +119,7 @@ namespace _13._1AddTraderWithDynamicAssorts
                 Id =
                 NewItemIds.GLOCK_BASE, // Ids matter, Ids MUST be unique for every item
                 Template = new MongoId("5a7ae0c351dfba0017554310")
-                , // This is the weapons tpl, found on: https://db.sp-tarkov.com/search
+                , // This is the weapons tpl, found on: https://db.sp-tushonka.com/search
             });
 
             // Add barrel
