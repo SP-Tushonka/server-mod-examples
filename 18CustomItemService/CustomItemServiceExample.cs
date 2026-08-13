@@ -25,7 +25,7 @@ public record ModMetadata : IModMetadata
     public bool HasPrepatcher { get; init; } = false;
 }
 
-[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
+[Injectable(TypePriority = OnLoadOrder.Preload + 1)]
 public class CustomItemServiceExample(
     ISptLogger<CustomItemServiceExample> logger,
     CustomItemService customItemService) : IOnLoad

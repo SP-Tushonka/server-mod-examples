@@ -1,0 +1,25 @@
+<Solution>
+  <Project Path="10CustomRoute/10CustomRoute.csproj" />
+  <Project Path="11RegisterClassesInDI/11RegisterClassesInDI.csproj" />
+  <Project Path="12Bundle/12Bundle.csproj" />
+  <Project Path="13.1AddTraderWithDynamicAssorts/13.1AddTraderWithDynamicAssorts.csproj" />
+  <Project Path="13AddTraderWithAssortJson/13AddTraderWithAssortJson.csproj" />
+  <Project Path="14AfterDBLoadHook/14AfterDBLoadHook.csproj" />
+  <Project Path="15HttpListenerExample/15HttpListenerExample.csproj" />
+  <Project Path="18.1CustomItemServiceLootBox/18.1CustomItemServiceLootBox.csproj" />
+  <Project Path="18CustomItemService/18CustomItemService.csproj" />
+  <Project Path="1Logging/01Logging.csproj" />
+  <Project Path="20CustomChatBot/20CustomChatBot.csproj" />
+  <Project Path="21CustomCommandoCommand/21CustomCommandoCommand.csproj" />
+  <Project Path="22CustomSptCommand/22CustomSptCommand.csproj" />
+  <Project Path="23CustomAbstractChatBot/23CustomAbstractChatBot.csproj" />
+  <Project Path="24Websocket/24Websocket.csproj" />
+  <Project Path="25AddCustomLocales/25AddCustomLocales.csproj" />
+  <Project Path="2EditDatabase/02EditDatabase.csproj" />
+  <Project Path="3EditSptConfig/03EditSptConfig.csproj" />
+  <Project Path="5ReadCustomJsonConfig/05ReadCustomJsonConfig.csproj" />
+  <Project Path="6OverrideMethodHarmony/06OverrideMethodHarmony.csproj" />
+  <Project Path="7UseMultipleClasses/07UseMultipleClasses.csproj" />
+  <Project Path="8OnLoad/08OnLoad.csproj" />
+  <Project Path="9OnUpdate/09OnUpdate.csproj" />
+</Solution>

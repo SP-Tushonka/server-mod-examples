@@ -26,8 +26,8 @@ public record ModMetadata : IModMetadata
     public bool HasPrepatcher { get; init; } = false;
 }
 
-// Inject just after the database has loaded
-[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
+// The database loads in preload, we should immediately add or update items here
+[Injectable(TypePriority = OnLoadOrder.Preload + 1)]
 public class CustomItemServiceLootBox(
     ISptLogger<CustomItemServiceLootBox> logger,
     TemplateTable templateTable,

@@ -44,7 +44,8 @@ public class CustomStaticRouter(JsonUtil jsonUtil, CustomStaticRouterCallback cu
                     url,
                     info,
                     sessionId,
-                    output
+                    output,
+                    cancellationToken
                 ) => await customStaticRouterCallback.HandleExampleStaticRoute(url, info, sessionId)
             ),
             // There are cases where you dont want to send data to the server, in that case you can ignore ExampleStaticRequestData and use EmptyRequestData
@@ -54,7 +55,8 @@ public class CustomStaticRouter(JsonUtil jsonUtil, CustomStaticRouterCallback cu
                     url,
                     info,
                     sessionId,
-                    output
+                    output,
+                    cancellationToken
                 ) => await customStaticRouterCallback.HandleEmptyExampleStaticRoute(url, info, sessionId)
             )
         ])
