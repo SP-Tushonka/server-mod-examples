@@ -11,7 +11,7 @@ namespace _21CustomCommandoCommand;
 [Injectable]
 public class CustomCommandoCommand(
     MailSendService mailSendService,
-    GlobalTable globalTable) : IChatCommand
+    GlobalTable globalTable) : ICommandoCommand
 {
     public string GetCommandHelp(string command)
     {
@@ -34,6 +34,8 @@ public class CustomCommandoCommand(
         return new ValueTask<string>(string.Empty);
     }
 
-    public string CommandPrefix { get; }
+    // Commando natively uses the `spt` prefix, you specify a new prefix for your commands with this example.
+    // If you want to use the spt prefix - see 22CustomSptCommand
+    public string CommandPrefix { get; } = "test";
     public List<string> Commands => ["talk"];
 }
