@@ -17,6 +17,7 @@
   <Project Path="25AddCustomLocales/25AddCustomLocales.csproj" />
   <Project Path="2EditDatabase/02EditDatabase.csproj" />
   <Project Path="3EditSptConfig/03EditSptConfig.csproj" />
+  <Project Path="5.1ReadCustomJsonConfigAndAddToSIC/5.1ReadCustomJsonConfigAndAddToSIC.csproj" />
   <Project Path="5ReadCustomJsonConfig/05ReadCustomJsonConfig.csproj" />
   <Project Path="6OverrideMethodHarmony/06OverrideMethodHarmony.csproj" />
   <Project Path="7UseMultipleClasses/07UseMultipleClasses.csproj" />
