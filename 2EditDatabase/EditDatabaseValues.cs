@@ -9,6 +9,8 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace _2EditDatabase;
 
+using SPTarkov.Server.Core.Models.Common;
+
 /// <summary>
 /// This is required for all mods.
 /// This is where we define all the metadata associated with this mod.
@@ -167,7 +169,7 @@ public class EditDatabaseValues(
         btrSettings.MapsConfigs.TryGetValue("Woods", out var woodsBtrSettings);
 
         // Lets set the BTR to use the christmas skin
-        woodsBtrSettings.BtrSkin = "Tarcola";
+        woodsBtrSettings?.BtrSkin = "Tarcola";
     }
 
     private void EditHideout()
@@ -178,14 +180,20 @@ public class EditDatabaseValues(
         // We find the toilet, we use 'firstOrDefault', if we cant find the watercloset, 'waterclosetArea' will be null
         var waterclosetArea = hideoutAreas.FirstOrDefault(area => area.Type == HideoutAreas.WaterCloset);
 
+        if (waterclosetArea == null)
+        {
+            logger.Error("Oh no, there is no water closet area. Better return early so we don't throw a null reference exception");
+            return;
+        }
 
-        // Now we have the toilet, we can find the requirements to craft, all data is stored by stage
+        // Now we have the toilet and we know it isn't null, we can find the requirements to craft, all data is stored by stage
         var toiletStages = waterclosetArea.Stages;
 
         // Stages are stored in a dictionary, a dictionary has a 'key' and a 'value'
         // In this case, the 'key' is the upgrade stage, e.g. "1", or "2"
-        // We reference to each stage as a 'stageKvP' this means 'Key value Pair', every key has a value (key = stage number, value = data for that stage)
-        foreach (var (stageKey, stageValue) in toiletStages)
+        // We reference to each stage as a 'Key value Pair', every key has a value (key = stage number, value = data for that stage)
+        // Because `toiletStages` is a nullable dictionary, we can safely loop with a coalescing empty array fallback
+        foreach (var (stageKey, stageValue) in toiletStages ?? [])
         {
             // while we're here, we can make the stages craft really fast (60 seconds)
             stageValue.ConstructionTime = 60;
@@ -194,36 +202,50 @@ public class EditDatabaseValues(
             var stageRequirements = stageValue.Requirements;
 
             // We empty the requirements out, now it can be built straight away
-            stageRequirements.Clear();
+            stageRequirements?.Clear();
         }
     }
 
     private void EditScavSettings()
     {
         // Same as the above example, we use 'TryGetValue' to get the 'assault' bot (assault is the internal name for scavs)
-        botTable.Types.TryGetValue("assault", out var assaultBot);
+        if (botTable.Types.TryGetValue("assault", out var assaultBot))
+        {
+            // Since BotType is nullable, we might as well check for null and return early if it is. It shouldn't be null, but safer to check because we don't know what other mods are doing.
+            if (assaultBot == null)
+            {
+                return;
+            }
+            
+            // Let's make the chance to get a good backpack really high, but let's do it safely to ensure they have that equipment slot
+            if (!assaultBot.BotInventory.Equipment.TryGetValue(EquipmentSlots.Backpack, out var backPacks))
+            {
+                // The equipment slot wasn't found, so let's create a new dictionary for that slot so we can safely add to it
+                backPacks = new Dictionary<MongoId, double>();
+            }
 
-        // Let's make the chance to get a good backpack really high
-        assaultBot.BotInventory.Equipment.TryGetValue(EquipmentSlots.Backpack, out var backPacks);
-
-        // We access the backpacks dictionary by key directly using square brackets, we use ItemTpl to get the items ID
-        // Alternately, we could have typed backPacks["59e763f286f7742ee57895da"] and done the same thing, ItemTpl makes it easier to read
-        backPacks.AddOrUpdate(ItemTpl.BACKPACK_PILGRIM_TOURIST, 999999);
+            // We access the backpacks dictionary by key directly using square brackets, we use ItemTpl to get the items ID
+            // Alternately, we could have typed backPacks["59e763f286f7742ee57895da"] and done the same thing, ItemTpl makes it easier to read
+            backPacks.AddOrUpdate(ItemTpl.BACKPACK_PILGRIM_TOURIST, 999999);
 
 
-        // Now lets make them always have an M4A1
-        assaultBot.BotInventory.Equipment.TryGetValue(EquipmentSlots.FirstPrimaryWeapon, out var primaryWeapons);
+            // Now lets make them always have an M4A1 - we'll follow the same safe pattern as above
+            if (!assaultBot.BotInventory.Equipment.TryGetValue(EquipmentSlots.FirstPrimaryWeapon, out var primaryWeapons))
+            {
+                primaryWeapons = new Dictionary<MongoId, double>();
+            }
 
-        // We edit the weight value (pick chance) that is already there to be massive, making the item more likely to be picked
-        primaryWeapons.AddOrUpdate(ItemTpl.ASSAULTRIFLE_COLT_M4A1_556X45_ASSAULT_RIFLE, 999999);
+            // We edit the weight value (pick chance) that is already there to be massive, making the item more likely to be picked
+            primaryWeapons.AddOrUpdate(ItemTpl.ASSAULTRIFLE_COLT_M4A1_556X45_ASSAULT_RIFLE, 999999);
 
 
-        // Now lets make them always have the first name of Gary
-        // We start by removing all the existing names
-        assaultBot.FirstNames.Clear();
+            // Now lets make them always have the first name of Gary
+            // We start by removing all the existing names
+            assaultBot.FirstNames.Clear();
 
-        // We add the new name Gary, very menacing
-        assaultBot.FirstNames.Add("Gary");
+            // We add the new name Gary, very menacing
+            assaultBot.FirstNames.Add("Gary");
+        }
     }
 
     private void EditCustoms()
@@ -267,7 +289,7 @@ public class EditDatabaseValues(
         // Let's get Reshala, we use "FirstOrDefault" and look for the first boss with the name "bossBully"
         var reshala = bosses.FirstOrDefault(boss => boss.BossName == "bossBully");
 
-        // Set him to 100%
-        reshala.BossChance = 100;
+        // Set him to 100%, using conditional access to ensure we found him
+        reshala?.BossChance = 100;
     }
 }
