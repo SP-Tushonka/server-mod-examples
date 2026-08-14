@@ -49,7 +49,7 @@ public record ModMetadata : IModMetadata
     /// The minimum version must match the version of the SPT NuGet package referenced by the mod.
     /// For example, if the mod references SPT NuGet version 4.1.2, use "~4.1.2".
     /// </summary>
-    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.3");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.2");
 
     /// <summary>
     /// A list of mod GUIDs that are incompatible with this mod.
