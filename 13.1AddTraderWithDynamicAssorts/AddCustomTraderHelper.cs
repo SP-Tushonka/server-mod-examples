@@ -11,7 +11,7 @@ namespace _13._1AddTraderWithDynamicAssorts
     /// <summary>
     /// We inject this class into 'AddTraderWithDynamicAssorts' to help us with adding the new trader into the server
     /// </summary>
-    [Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
+    [Injectable(TypePriority = OnLoadOrder.TraderRegistration + 1)]
     public class AddCustomTraderHelper(
         ICloner cloner,
         TradersTable tradersTable,

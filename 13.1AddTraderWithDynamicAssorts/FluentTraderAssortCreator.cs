@@ -10,7 +10,7 @@ namespace _13._1AddTraderWithDynamicAssorts;
 /// <summary>
 /// We inject this class into 'AddTraderWithDynamicAssorts' to help us add items to the trader to sell
 /// </summary>
-[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
+[Injectable(TypePriority = OnLoadOrder.TraderRegistration + 1)]
 public class FluentTraderAssortCreator(
     TradersTable tradersTable,
     ISptLogger<FluentTraderAssortCreator> logger)

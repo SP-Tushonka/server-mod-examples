@@ -14,8 +14,8 @@ using SPTarkov.Server.Core.Models.Spt.Tables;
 
 namespace _13._1AddTraderWithDynamicAssorts;
 
-// This line tells the class to load right after "PostLoad" occurs
-[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
+// This line tells the class to load right after "TraderRegistration" occurs, we do this to ensure the trader is loaded and ready before profiles are
+[Injectable(TypePriority = OnLoadOrder.TraderRegistration + 1)]
 public class AddTraderWithDynamicAssorts(
     ISptLogger<AddTraderWithDynamicAssorts> logger,
     GlobalTable globalTable,

@@ -12,8 +12,9 @@ namespace _13AddTraderWithAssortJson;
 
 /// <summary>
 /// Feel free to use this as a base for your mod
+/// This line tells the class to load right after "TraderRegistration" occurs, we do this to ensure the trader is loaded and ready before profiles are
 /// </summary>
-[Injectable(TypePriority = OnLoadOrder.PostLoad + 1)]
+[Injectable(TypePriority = OnLoadOrder.TraderRegistration + 1)]
 public class AddTraderWithAssortJson(
     ModHelper modHelper,
     ImageRouter imageRouter,
