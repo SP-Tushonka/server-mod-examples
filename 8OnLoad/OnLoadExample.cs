@@ -15,9 +15,9 @@ namespace _8OnLoad;
 /// </summary>
 public record ModMetadata : IModMetadata
 {
-    public string ModGuid { get; init; } = "com.sp-tarkov.examples.onload";
+    public string ModGuid { get; init; } = "com.sp-tushonka.examples.onload";
     public string Name { get; init; } = "OnLoadExampleExample";
-    public string Author { get; init; } = "SPTarkov";
+    public string Author { get; init; } = "SPTDevTeam";
     public List<string>? Contributors { get; init; }
     public SemanticVersioning.Version Version { get; init; } = new("1.0.0");
     public SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
