@@ -53,7 +53,8 @@ public class ConfigRegistration : IOnDIConstruct
 // Create the Config Provider as a Singleton
 [Injectable(InjectionType.Singleton)]
 public class ConfigProvider(
-    ModConfig config // Because we registered our mod config we can now inject it into our classes
+    ModConfig config, // Because we registered our mod config we can now inject it into our classes
+    ReadJsonConfigAndAddToSic readJsonConfigAndAddToSic // Injecting our other class to apply the config
     ) : IConfigEditorConfigProvider
 {
     public IEnumerable<ConfigEditorConfigRegistration> GetConfigs()
@@ -65,6 +66,19 @@ public class ConfigProvider(
             metadata.Name,
             config,
             Path.Combine("user", "mods", "5.1ReadCustomJsonConfigAndAddToSIC", "config.json")
-            );
+            ) with
+            {
+                // Optional callback, in case you need to run additional logic, or re-run logic when the config changes via the SIC
+                OnAppliedToRuntimeAsync = CallbackMethod
+            };
+    }
+
+    private ValueTask CallbackMethod(object modifiedConfig, CancellationToken ct)
+    {
+        // You do not need to cast the modifiedConfig, or even use it if you don't want to
+        // Injected mod configs update with the new runtime values.
+        
+        readJsonConfigAndAddToSic.ApplyConfig();
+        return ValueTask.CompletedTask;
     }
 }
